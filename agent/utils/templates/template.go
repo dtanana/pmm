@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"text/template"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -105,7 +106,7 @@ func RenderDSN(dsn string, files *agentpb.TextFiles, tempDir string) (string, er
 		if err != nil {
 			return "", err
 		}
-
+		time.Sleep(2 * time.Minute)
 		b, err := tr.RenderTemplate("dsn", dsn, templateParams)
 		if err != nil {
 			return "", err

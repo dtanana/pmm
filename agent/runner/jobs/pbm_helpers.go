@@ -419,7 +419,7 @@ func pbmConfigure(ctx context.Context, l logrus.FieldLogger, params pbmConfigPar
 
 	output, err := exec.CommandContext(nCtx, pbmBin, args...).CombinedOutput() //nolint:gosec
 	if err != nil {
-		return errors.Wrapf(err, "pbm config error: %s", string(output))
+		return errors.Wrapf(err, "The DSN: %s had a pbm config error: %s", params.dsn, string(output))
 	}
 
 	if params.forceResync {

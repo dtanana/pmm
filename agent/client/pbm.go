@@ -56,7 +56,7 @@ func (c *Client) handlePBMSwitchRequest(ctx context.Context, req *agentpb.PBMSwi
 		"--mongodb-uri="+dsn).
 		CombinedOutput() // #nosec G204
 	if err != nil {
-		return errors.Wrapf(err, "pbm config error: %s", string(output))
+		return errors.Wrapf(err, "The DSN: %s had a pbm config error: %s", dsn, string(output))
 	}
 
 	return nil
