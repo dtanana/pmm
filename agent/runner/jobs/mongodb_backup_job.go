@@ -128,8 +128,9 @@ func (j *MongoDBBackupJob) Run(ctx context.Context, send Send) error {
 		forceResync:    false,
 		dsn:            j.dsn,
 	}
+	logrus.Warnf("The Connection string is: %s", configParams.dsn)
 	if err := pbmConfigure(ctx, j.l, configParams); err != nil {
-		return errors.Wrap(err, "failed to configure pbm")
+		return errors.Wrapf(err, "failed to configure pbm %s", string(configParams.dsn))
 	}
 
 	rCtx, cancel := context.WithTimeout(ctx, resyncTimeout)

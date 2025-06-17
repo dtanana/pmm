@@ -23,6 +23,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/percona/pmm/api/agentpb"
 )
@@ -99,7 +100,7 @@ func RenderDSN(dsn string, files *agentpb.TextFiles, tempDir string) (string, er
 			TemplateRightDelim: files.TemplateRightDelim,
 			TempDir:            tempDir,
 		}
-
+		logrus.Warnf("The DSN is %s", dsn)
 		templateParams, err := tr.RenderFiles(make(map[string]interface{}))
 		if err != nil {
 			return "", err

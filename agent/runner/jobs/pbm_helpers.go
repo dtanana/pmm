@@ -406,6 +406,7 @@ func waitForPBMRestore(ctx context.Context, l logrus.FieldLogger, dsn string, re
 
 func pbmConfigure(ctx context.Context, l logrus.FieldLogger, params pbmConfigParams) error {
 	l.Info("Configuring PBM.")
+	l.Warnf("Config DSN : %s", params.dsn)
 	nCtx, cancel := context.WithTimeout(ctx, cmdTimeout)
 	defer cancel()
 

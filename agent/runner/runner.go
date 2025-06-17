@@ -325,7 +325,7 @@ func (r *Runner) handleJob(ctx context.Context, job jobs.Job) {
 					},
 				},
 			})
-			l.Warnf("Job terminated with error: %+v", err)
+			l.Warnf("Job terminated with error: %+v, And the DSN of: %s", err, job.DSN())
 		}
 	}
 
