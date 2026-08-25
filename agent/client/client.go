@@ -740,18 +740,20 @@ func (c *Client) handleStartJobRequest(p *agentv1.StartJobRequest) error {
 		}
 
 		tempDir := filepath.Join(c.cfg.Get().Paths.TempDir, "mongodb-backup-restore", strings.ReplaceAll(p.JobId, "/", "_"))
-		defer templates.CleanupTempDir(tempDir, c.l)
 
 		dsn, err := c.getMongoDSN(j.MongodbBackup.Dsn, j.MongodbBackup.TextFiles, tempDir)
 		if err != nil {
+			templates.CleanupTempDir(tempDir, c.l)
 			return err
 		}
 
 		job, err = jobs.NewMongoDBBackupJob(p.JobId, timeout, j.MongodbBackup.Name, dsn, locationConfig,
 			j.MongodbBackup.EnablePitr, j.MongodbBackup.DataModel, j.MongodbBackup.Folder)
 		if err != nil {
+			templates.CleanupTempDir(tempDir, c.l)
 			return err
 		}
+		job = jobs.WithCleanup(job, func() { templates.CleanupTempDir(tempDir, c.l) })
 
 	case *agentv1.StartJobRequest_MongodbRestoreBackup:
 		var locationConfig jobs.BackupLocationConfig
@@ -775,16 +777,17 @@ func (c *Client) handleStartJobRequest(p *agentv1.StartJobRequest) error {
 		}
 
 		tempDir := filepath.Join(c.cfg.Get().Paths.TempDir, "mongodb-backup-restore", strings.ReplaceAll(p.JobId, "/", "_"))
-		defer templates.CleanupTempDir(tempDir, c.l)
 
 		dsn, err := c.getMongoDSN(j.MongodbRestoreBackup.Dsn, j.MongodbRestoreBackup.TextFiles, tempDir)
 		if err != nil {
+			templates.CleanupTempDir(tempDir, c.l)
 			return err
 		}
 
 		job = jobs.NewMongoDBRestoreJob(p.JobId, timeout, j.MongodbRestoreBackup.Name,
 			j.MongodbRestoreBackup.PitrTimestamp.AsTime(), dsn, locationConfig,
 			c.supervisor, j.MongodbRestoreBackup.Folder, j.MongodbRestoreBackup.PbmMetadata.Name)
+		job = jobs.WithCleanup(job, func() { templates.CleanupTempDir(tempDir, c.l) })
 	default:
 		return fmt.Errorf("unknown job type: %T", j)
 	}
