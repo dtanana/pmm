@@ -209,6 +209,9 @@ func (r *Runner) StartJob(job jobs.Job) error {
 	case r.jobs <- job:
 		return nil
 	default:
+		if cleanupJob, ok := job.(jobs.CleanupJob); ok {
+			cleanupJob.Cleanup()
+		}
 		return errors.New("jobs queue overflowed")
 	}
 }
@@ -279,6 +282,10 @@ func (r *Runner) handleJob(ctx context.Context, job jobs.Job) {
 
 	r.wg.Add(1)
 	run := func(ctx context.Context) {
+		if cleanupJob, ok := job.(jobs.CleanupJob); ok {
+			defer cleanupJob.Cleanup()
+		}
+
 		defer func(start time.Time) {
 			l.WithField("duration", time.Since(start).String()).Info("Job finished.")
 		}(time.Now())

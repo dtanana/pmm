@@ -355,6 +355,48 @@ func TestSemaphoresReleasing(t *testing.T) {
 	assert.Zero(t, cr.lSemsLen())
 }
 
+func TestJobCleanup(t *testing.T) {
+	t.Parallel()
+
+	cr := New(1, 1)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go cr.Run(ctx)
+
+	cleaned := make(chan struct{})
+	job := jobs.WithCleanup(testJob{id: "cleanup-test", timeout: time.Millisecond}, func() {
+		close(cleaned)
+	})
+	require.NoError(t, cr.StartJob(job))
+
+	select {
+	case <-cleaned:
+	case <-time.After(time.Second):
+		require.Fail(t, "job cleanup did not run")
+	}
+}
+
+func TestQueuedJobCleanup(t *testing.T) {
+	t.Parallel()
+
+	cr := New(1, 1)
+	for i := range bufferSize {
+		require.NoError(t, cr.StartJob(testJob{id: fmt.Sprintf("queued-%d", i)}))
+	}
+
+	cleaned := make(chan struct{})
+	job := jobs.WithCleanup(testJob{id: "overflow"}, func() {
+		close(cleaned)
+	})
+	require.EqualError(t, cr.StartJob(job), "jobs queue overflowed")
+
+	select {
+	case <-cleaned:
+	default:
+		require.Fail(t, "rejected job cleanup did not run")
+	}
+}
+
 type testJob struct {
 	id      string
 	timeout time.Duration

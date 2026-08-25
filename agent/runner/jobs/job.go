@@ -17,6 +17,7 @@ package jobs
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	agentv1 "github.com/percona/pmm/api/agent/v1"
@@ -48,4 +49,27 @@ type Job interface {
 	DSN() string
 	// Run starts Job execution.
 	Run(ctx context.Context, send Send) error
+}
+
+// CleanupJob is a Job that owns resources which must be released after the
+// runner finishes it, including cancellation and pre-run failures.
+type CleanupJob interface {
+	Job
+	Cleanup()
+}
+
+type jobWithCleanup struct {
+	Job
+	cleanup     func()
+	cleanupOnce sync.Once
+}
+
+// WithCleanup attaches an idempotent cleanup function to a Job.
+func WithCleanup(job Job, cleanup func()) CleanupJob {
+	return &jobWithCleanup{Job: job, cleanup: cleanup}
+}
+
+// Cleanup releases resources owned by the Job.
+func (j *jobWithCleanup) Cleanup() {
+	j.cleanupOnce.Do(j.cleanup)
 }
